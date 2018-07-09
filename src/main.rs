@@ -6,7 +6,7 @@ fn main() {
         println!("Usage: duel NAME HOST");
         return;
     }
-    host = args.pop().unwrap();
-    name = args.pop().unwrap();
+    let host = args.pop().unwrap();
+    let name = args.pop().unwrap();
     println!("{} {}", name, host);
 }
