@@ -12,14 +12,14 @@ fn main() {
              VERSION, name, host);
 
     // Run the audio system in a separate thread
-    let (audio_tx, audio_rx) = channel::<u8>();
+    let (audio_tx, audio_rx) = channel::<&'static str>();
     let audio_handle = Builder::new()
         .name("Audio System".to_string())
         .spawn(move|| audio_loop(audio_rx))
         .unwrap();
 
     // Shut down
-    let _ = audio_tx.send(0);
+    let _ = audio_tx.send("quit");
     let _ = audio_handle.join();
 }
 
