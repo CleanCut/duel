@@ -5,7 +5,7 @@ use duel::{audio_loop, parse_args};
 use duel::player::Player;
 use rusty_sword_arena::VERSION;
 use rusty_sword_arena::game::{
-    ButtonState, ButtonValue, InputEvent, PlayerEvent, PlayerInput, PlayerState, Vector2
+    ButtonState, ButtonValue, InputEvent, PlayerEvent, PlayerInput, Vector2
 };
 use rusty_sword_arena::gfx::Window;
 use rusty_sword_arena::net::ServerConnection;
@@ -15,7 +15,8 @@ use std::thread::Builder;
 use std::time::{Duration, Instant};
 
 fn main() {
-    let (name, host) = parse_args();
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let (name, host) = parse_args(args);
     println!("Using rusty_sword_arena v{}, name: {}, host: {}",
              VERSION, name, host);
 
