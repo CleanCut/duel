@@ -3,11 +3,15 @@ extern crate rusty_sword_arena;
 
 use duel::{audio_loop, parse_args};
 use rusty_sword_arena::VERSION;
-use rusty_sword_arena::game::PlayerState;
+use rusty_sword_arena::game::{
+    ButtonState, ButtonValue, InputEvent, PlayerInput, PlayerState, Vector2
+};
+use rusty_sword_arena::gfx::Window;
 use rusty_sword_arena::net::ServerConnection;
 use std::collections::HashMap;
 use std::sync::mpsc::channel;
 use std::thread::Builder;
+use std::time::{Duration, Instant};
 
 fn main() {
     let (name, host) = parse_args();
@@ -38,8 +42,51 @@ fn main() {
 
     // Everything else we need before the game loop
     let mut players : HashMap<u8, Player> = HashMap::new();
+    let mut my_input = PlayerInput::new();
+    my_input.id = my_id;
+    let mut mouse_pos = Vector2::new();
+    let mut window = Window::new(None);
+    let mut last_input_sent = Instant::now();
+    let send_input_duration = Duration::from_millis(15);
 
     'gameloop: loop {
+        // Accumulate user input into a PlayerInput
+        for input_event in window.poll_input_events() {
+            match input_event {
+                InputEvent::WindowClosed => break 'gameloop,
+                InputEvent::MouseMoved { position } => mouse_pos = position,
+                InputEvent::Button { button_value, button_state } => {
+                    let amount = match button_state {
+                        ButtonState::Pressed => 1.0,
+                        ButtonState::Released => 0.0,
+                    };
+                    match button_value {
+                        ButtonValue::Up => my_input.move_amount.y = amount,
+                        ButtonValue::Down => my_input.move_amount.y = -amount,
+                        ButtonValue::Left => my_input.move_amount.x = -amount,
+                        ButtonValue::Right => my_input.move_amount.x = amount,
+                        ButtonValue::Attack => {
+                            my_input.attack = match button_state {
+                                ButtonState::Pressed => true,
+                                ButtonState::Released => false,
+                            };
+                        },
+                        ButtonValue::Quit => break 'gameloop,
+                    }
+                }
+            }
+        }
+        if let Some(my_player) = players.get(&my_id) {
+            my_input.direction = my_player.state.pos.angle_between(mouse_pos);
+        }
+        println!("{:?}", my_input);
+
+        // Periodically send accumulated input
+        if last_input_sent.elapsed() > send_input_duration {
+            server_conn.send_player_input(my_input.clone());
+            last_input_sent = Instant::now();
+        }
+
         for game_state in server_conn.poll_game_states() {
             // Remove any players who are no longer in the game
             players.retain(|k, _v| game_state.player_states.contains_key(k));
@@ -51,7 +98,6 @@ fn main() {
                     players.insert(id, Player::new(player_state));
                 }
             }
-            println!("{}", players.len());
         }
     }
 
