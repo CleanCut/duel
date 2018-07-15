@@ -3,6 +3,7 @@ extern crate rusty_sword_arena;
 
 use duel::{audio_loop, parse_args};
 use rusty_sword_arena::VERSION;
+use rusty_sword_arena::net::ServerConnection;
 use std::sync::mpsc::channel;
 use std::thread::Builder;
 
@@ -18,8 +19,27 @@ fn main() {
         .spawn(move|| audio_loop(audio_rx))
         .unwrap();
 
+    // Establish the network connection to the server
+    let mut server_conn = ServerConnection::new(&host);
+    let my_id = server_conn.join(&name);
+    if my_id == 0 {
+        println!("Either name is taken or server is full. Give it another try.");
+        std::process::exit(3);
+    }
+    let game_setting = server_conn.get_game_setting();
+    println!("Client v{}, Server v{}", VERSION, game_setting.version);
+    if game_setting.version != VERSION {
+        println!("WARNING!!!! Client and server versions don't match!");
+        // std::process::exit(4);
+    }
+
     // Shut down
     let _ = audio_tx.send("quit");
     let _ = audio_handle.join();
+    if server_conn.leave(my_id) {
+        println!("Server acknowledges leaving.");
+    } else {
+        println!("Server must have already kicked us.");
+    }
 }
 
