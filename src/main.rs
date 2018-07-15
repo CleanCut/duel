@@ -5,7 +5,7 @@ use duel::{audio_loop, parse_args};
 use duel::player::Player;
 use rusty_sword_arena::VERSION;
 use rusty_sword_arena::game::{
-    ButtonState, ButtonValue, InputEvent, PlayerInput, PlayerState, Vector2
+    ButtonState, ButtonValue, InputEvent, PlayerEvent, PlayerInput, PlayerState, Vector2
 };
 use rusty_sword_arena::gfx::Window;
 use rusty_sword_arena::net::ServerConnection;
@@ -97,6 +97,20 @@ fn main() {
                     players.get_mut(&id).unwrap().update_state(player_state);
                 } else {
                     players.insert(id, Player::new(player_state, &window));
+                }
+            }
+        }
+
+        // Play sounds based off of player events!
+        for (_id, player) in &mut players {
+            for player_event in player.state.player_events.drain(..) {
+                match player_event {
+                    PlayerEvent::AttackMiss => audio_tx.send("miss").unwrap(),
+                    PlayerEvent::Die => audio_tx.send("die").unwrap(),
+                    PlayerEvent::Spawn => audio_tx.send("spawn").unwrap(),
+                    PlayerEvent::Join => audio_tx.send("join").unwrap(),
+                    PlayerEvent::Leave => audio_tx.send("leave").unwrap(),
+                    _ => (),
                 }
             }
         }
