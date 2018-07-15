@@ -1,6 +1,8 @@
 extern crate impose;
+extern crate rusty_sword_arena;
 
 pub mod audio;
+pub mod player;
 
 pub use audio::audio_loop;
 

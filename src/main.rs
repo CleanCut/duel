@@ -2,6 +2,7 @@ extern crate duel;
 extern crate rusty_sword_arena;
 
 use duel::{audio_loop, parse_args};
+use duel::player::Player;
 use rusty_sword_arena::VERSION;
 use rusty_sword_arena::game::{
     ButtonState, ButtonValue, InputEvent, PlayerInput, PlayerState, Vector2
@@ -79,7 +80,7 @@ fn main() {
         if let Some(my_player) = players.get(&my_id) {
             my_input.direction = my_player.state.pos.angle_between(mouse_pos);
         }
-        println!("{:?}", my_input);
+
 
         // Periodically send accumulated input
         if last_input_sent.elapsed() > send_input_duration {
@@ -95,10 +96,28 @@ fn main() {
                 if players.contains_key(&id) {
                     players.get_mut(&id).unwrap().update_state(player_state);
                 } else {
-                    players.insert(id, Player::new(player_state));
+                    players.insert(id, Player::new(player_state, &window));
                 }
             }
         }
+
+        // Draw a frame!
+        window.drawstart();
+        // Draw all the bodies!
+        for (_id, player) in &players {
+            if player.state.dead {
+                continue;
+            }
+            window.draw(&player.body);
+        }
+        // Draw all the swords!
+        for (_id, player) in &players {
+            if player.state.dead {
+                continue;
+            }
+            window.draw(&player.sword);
+        }
+        window.drawfinish();
     }
 
     // Shut down
@@ -108,21 +127,5 @@ fn main() {
         println!("Server acknowledges leaving.");
     } else {
         println!("Server must have already kicked us.");
-    }
-}
-
-#[derive(Debug)]
-struct Player {
-    state: PlayerState,
-}
-
-impl Player {
-    fn new(state: PlayerState) -> Self {
-        Self {
-            state,
-        }
-    }
-    fn update_state(&mut self, state: PlayerState) {
-        self.state = state;
     }
 }
