@@ -1,4 +1,4 @@
-This repo represents pretty much what we're going to do _together_ in the
+This repo was prepared as the proof-of-concept for what we built _together_ in the
 [Rusty Sword Arena](https://github.com/CleanCut/rusty_sword_arena)
 [session at OSCON 2018](https://conferences.oreilly.com/oscon/oscon-or/public/schedule/detail/67116)
 
